@@ -5,9 +5,9 @@
 #include "common.h"
 
 struct Point1 {
-	double x, y;     // coordinates
+	double x, y;     // coordinates -> vector de trasaturi(coordonate, culoare, etc)
 	int cluster;     // one way to represent that a point belongs to a specific cluster
-	double minDist;  // for assigning the point to the nearest cluster. 
+	//double minDist;  // for assigning the point to the nearest cluster. 
 };
 
 void testOpenImage()
@@ -130,10 +130,13 @@ bool sameCentroids(std::vector<Point1> centroids, std::vector<Point1> prviouscen
 }
 
 double euclidianDistance(Point1 p1, Point1 p2) {
-
+	//ponderi la tarsaturile din puncte => distante ponderate
+	//vectorul de ponderi constant, trimis ca parametru la euclidianDistance
 	return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
 }
 
+//alegem noi centroizii sa fie unul langa altul ca sa se observe ca se deplaseaza 
+//k = 2
 void kMeansClustering(std::vector<Point1>* points, int nrRepetitions, int k) {//the larger nrRepetitions, the better the solution. k-nr of clusters
 	std::vector<Point1> centroids;
 	std::vector<Point1> prviouscentroids;
@@ -147,6 +150,8 @@ void kMeansClustering(std::vector<Point1>* points, int nrRepetitions, int k) {//
 			std::vector<Point1> centroids = computeCentroids(*points, k);
 		}
 		int clusterId = 0;
+		
+		//TODO restetare distante 
 		for (int i = 0; i < centroids.size(); i++) { //iterate over the clusters
 			Point1 c = centroids.at(i);
 			for (int j = 0; j < points->size(); j++) {//iterate over the points to assign them to the nearest cluster
@@ -162,6 +167,7 @@ void kMeansClustering(std::vector<Point1>* points, int nrRepetitions, int k) {//
 			}
 			clusterId++;
 		}
+		///afisare pixeli la fiecare iteratie dupa actualizarea centroidului
 	}
 	//after the first iteretion the points will not be equal distributed to each cluster
 	//there has to be a second part where the new centroids are computed, done by 
