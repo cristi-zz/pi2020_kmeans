@@ -4,6 +4,11 @@
 #include "stdafx.h"
 #include "common.h"
 
+struct Point1 {
+	double x, y;     // coordinates
+	int cluster;     // one way to represent that a point belongs to a specific cluster
+	double minDist;  // for assigning the point to the nearest cluster. 
+};
 
 void testOpenImage()
 {
@@ -98,6 +103,70 @@ void testNegativeImage()
 void new_function() {
 	printf("Bau Bau!");
 	printf("Bau! Bau! Ca trebuie!");
+}
+
+//our code
+
+//============pick k random pixels(points in 2d space), the initial centroids ======================
+std::vector<Point1> pick_k_random_points(std::vector<Point1>* centroids, int k) {// pointer because we don't have to copy the vector of points(waste of time and memory)
+	//std::vector<Point1> centroids;
+	srand(time(0));  // need to set the random seed
+	for (int i = 0; i < k; ++i) {
+		(*centroids).push_back(centroids->at(rand() % centroids->size));
+	}
+}
+
+
+
+void kMeansClustering(std::vector<Point1>* points, int nrRepetitions, int k) {//the larger nrRepetitions, the better the solution. k-nr of clusters
+	std::vector<Point1> centroids;
+	std::vector<Point1> prviouscentroids;
+	bool first = true;
+	while (!sameCentroids(centroids, prviouscentroids)) {
+		if (first) {
+			std::vector<Point1> centroids = pick_k_random_points(points, k);
+			first = false;
+		}
+		else {
+			std::vector<Point1> centroids = computeCentroids(*points, k);
+		}
+		int clusterId = 0;
+		for (int i = 0; i < centroids.size(); i++) { //iterate over the clusters
+			Point1 c = centroids.at(i);
+			for (int j = 0; j < points->size(); j++) {//iterate over the points to assign them to the nearest cluster
+				Point1 p = points->at(j);
+				double dist = euclidianDistance(c, p); //by euclidian distance
+				if (dist < p.minDist) {		//if the distance between a point and curent cluster
+											//is smaller than distance between this point and previous 
+											//cluster, update the point to be part of the 
+											//current cluster and the new distance also.
+					p.minDist = dist;
+					p.cluster = clusterId;
+				}
+			}
+			clusterId++;
+		}
+	}
+	//after the first iteretion the points will not be equal distributed to each cluster
+	//there has to be a second part where the new centroids are computed, done by 
+	//calling computeCentroids method
+}
+
+
+
+
+
+Mat_<Vec3b> generateImage(std::vector<Point1> points) {
+	Mat_<Vec3b> img(100, 100);
+	for (int i = 0; i < img.rows; i++) {
+		for (int j = 0; j < img.cols; j++) {
+			for (int k = 0; k < points.size; i++) {
+
+			}
+
+			img(i, j) = 255;
+		}
+	}
 }
 
 int main()
