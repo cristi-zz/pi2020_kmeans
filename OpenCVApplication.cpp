@@ -87,8 +87,8 @@ void kMeansClustering(std::vector<Point1>& points, const int& k, const int& nrRe
 	std::vector<Point1> prviouscentroids;
 	int reps = 0;
 
-	centroids.push_back(Point1{ 2.0, 3.0, 0, 0.0 }); //= pick_k_random_points(points, k); // resets distances
-	centroids.push_back(Point1{ 3.0, 2.0, 0, 0.0 });
+	centroids.push_back(Point1{ 2.0, 3.0, 0 }); //= pick_k_random_points(points, k); // resets distances
+	centroids.push_back(Point1{ 3.0, 2.0, 0 });
 
 	do {
 		
@@ -156,12 +156,12 @@ Mat_<Vec3b> generateImage(std::vector<Point1> points) {
 int main()
 {
 	std::vector<Point1> points;
-	points.push_back(Point1{ 2.0, 3.0, 0, 0.0 });
-	points.push_back(Point1{ 10.0, 11.0, 0, 0.0 });
-	points.push_back(Point1{ 3.0, 2.0, 0, 0.0 });
-	points.push_back(Point1{ 11.0, 12.0, 0, 0.0 });
-	points.push_back(Point1{ 3.0, 4.0, 0, 0.0 });
-	points.push_back(Point1{ 9.0, 10.0, 0, 0.0 });
+	points.push_back(Point1{ 2.0, 3.0, 0 });
+	points.push_back(Point1{ 10.0, 11.0, 0 });
+	points.push_back(Point1{ 3.0, 2.0, 0 });
+	points.push_back(Point1{ 11.0, 12.0, 0 });
+	points.push_back(Point1{ 3.0, 4.0, 0 });
+	points.push_back(Point1{ 9.0, 10.0, 0});
 
 	const WEIGH weighs{ 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
 	int numberOfRepetitions = 2;
