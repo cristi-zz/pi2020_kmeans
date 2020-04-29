@@ -10,6 +10,12 @@ struct Point1 {
 	//double minDist;  // for assigning the point to the nearest cluster. 
 };
 
+typedef struct weigh
+{
+	float w1, w2, w3, w4, w5;
+	
+}WEIGH;
+
 void testOpenImage()
 {
 	char fname[MAX_PATH];
