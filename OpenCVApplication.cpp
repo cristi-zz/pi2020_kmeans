@@ -3,11 +3,12 @@
 
 #include "stdafx.h"
 #include "common.h"
+#include <time.h>
 
 struct Point1 {
-	double x, y;     // coordinates -> vector de trasaturi(coordonate, culoare, etc)
+	double x, y;     // coordinates
 	int cluster;     // one way to represent that a point belongs to a specific cluster
-	//double minDist;  // for assigning the point to the nearest cluster. 
+	double minDist;  // for assigning the point to the nearest cluster. 
 };
 
 typedef struct weigh
@@ -16,116 +17,29 @@ typedef struct weigh
 	
 }WEIGH;
 
-void testOpenImage()
-{
-	char fname[MAX_PATH];
-	while(openFileDlg(fname))
-	{
-		Mat src;
-		src = imread(fname);
-		imshow("image",src);
-		waitKey();
-	}
-}
-
-void testOpenImagesFld()
-{
-	char folderName[MAX_PATH];
-	if (openFolderDlg(folderName)==0)
-		return;
-	char fname[MAX_PATH];
-	FileGetter fg(folderName,"bmp");
-	while(fg.getNextAbsFile(fname))
-	{
-		Mat src;
-		src = imread(fname);
-		imshow(fg.getFoundFileName(),src);
-		if (waitKey()==27) //ESC pressed
-			break;
-	}
-}
-
-void testImageOpenAndSave()
-{
-	Mat src, dst;
-
-	src = imread("Images/Lena_24bits.bmp", CV_LOAD_IMAGE_COLOR);	// Read the image
-
-	if (!src.data)	// Check for invalid input
-	{
-		printf("Could not open or find the image\n");
-		return;
-	}
-
-	// Get the image resolution
-	Size src_size = Size(src.cols, src.rows);
-
-	// Display window
-	const char* WIN_SRC = "Src"; //window for the source image
-	namedWindow(WIN_SRC, CV_WINDOW_AUTOSIZE);
-	cvMoveWindow(WIN_SRC, 0, 0);
-
-	const char* WIN_DST = "Dst"; //window for the destination (processed) image
-	namedWindow(WIN_DST, CV_WINDOW_AUTOSIZE);
-	cvMoveWindow(WIN_DST, src_size.width + 10, 0);
-
-	cvtColor(src, dst, CV_BGR2GRAY); //converts the source image to a grayscale one
-
-	imwrite("Images/Lena_24bits_gray.bmp", dst); //writes the destination to file
-
-	imshow(WIN_SRC, src);
-	imshow(WIN_DST, dst);
-
-	printf("Press any key to continue ...\n");
-	waitKey(0);
-}
-
-void testNegativeImage()
-{
-	char fname[MAX_PATH];
-	int MAX_GREY_VALUE = 256;
-	while(openFileDlg(fname))
-	{
-		Mat_<uchar> src = imread(fname,CV_LOAD_IMAGE_GRAYSCALE);
-		int height = src.rows;
-		int width = src.cols;
-		Mat_<uchar> dst = Mat_<uchar>(height,width);
-		// Asa se acceseaaza pixelii individuali pt. o imagine cu 8 biti/pixel
-		for (int i=0; i<height; i++)
-		{
-			for (int j=0; j<width; j++)
-			{
-				uchar val = src(i,j);
-				uchar neg = MAX_GREY_VALUE - val;
-				dst(i,j) = neg;
-			}
-		}
-		imshow("Input image",src);
-		imshow("Negative image",dst);
-		waitKey();
-	}
-}
-
-void new_function() {
-	printf("Bau Bau!");
-	printf("Bau! Bau! Ca trebuie!");
-}
-
 //our code
 
 //============pick k random pixels(points in 2d space), the initial centroids ======================
-std::vector<Point1> pick_k_random_points(std::vector<Point1>* centroids, int k) {// pointer because we don't have to copy the vector of points(waste of time and memory)
-	//std::vector<Point1> centroids;
+std::vector<Point1> pick_k_random_points(std::vector<Point1>& points, const int& k) {// pointer because we don't have to copy the vector of points(waste of time and memory)
+	//reset distances
+	for (auto& p : points)
+	{
+		p.minDist = INFINITY;
+	}
+
+	std::vector<Point1> centroids;
 	srand(time(0));  // need to set the random seed
 	for (int i = 0; i < k; ++i) {
-		(*centroids).push_back(centroids->at(rand() % centroids->size));
+		centroids.push_back(points.at(rand() % points.size()));
 	}
+
+	return centroids;
 }
 
-std::vector<Point1> computeCentroids(std::vector<Point1> points, int k);
+std::vector<Point1> computeCentroids(std::vector<Point1>& points, const int& k);
 
 
-bool sameCentroids(std::vector<Point1> centroids, std::vector<Point1> prviouscentroids) {
+bool sameCentroids(const std::vector<Point1>& centroids, const std::vector<Point1>& prviouscentroids) {
 	bool same = true;
 	for (int i = 0; i < centroids.size(); i++) {
 		if (centroids.at(i).x != prviouscentroids.at(i).x && centroids.at(i).y != prviouscentroids.at(i).y) {
@@ -135,52 +49,59 @@ bool sameCentroids(std::vector<Point1> centroids, std::vector<Point1> prviouscen
 	return same;
 }
 
-double euclidianDistance(Point1 p1, Point1 p2) {
+double euclidianDistance(Point1 p1, Point1 p2, const WEIGH& weigh) {
 	//ponderi la tarsaturile din puncte => distante ponderate
 	//vectorul de ponderi constant, trimis ca parametru la euclidianDistance
-	return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+	return sqrt( weigh.w1*((p1.x - p2.x) * (p1.x - p2.x)) + weigh.w2*((p1.y - p2.y) * (p1.y - p2.y)));
 }
 
 //alegem noi centroizii sa fie unul langa altul ca sa se observe ca se deplaseaza 
 //k = 2
-void kMeansClustering(std::vector<Point1>* points, int nrRepetitions, int k) {//the larger nrRepetitions, the better the solution. k-nr of clusters
+void kMeansClustering(std::vector<Point1>& points, const WEIGH& weighs, const int& nrRepetitions, const int& k) {//the larger nrRepetitions, the better the solution. k-nr of clusters
 	std::vector<Point1> centroids;
 	std::vector<Point1> prviouscentroids;
 	bool first = true;
-	while (!sameCentroids(centroids, prviouscentroids)) {
+	do {
 		if (first) {
-			std::vector<Point1> centroids = pick_k_random_points(points, k);
+			centroids = pick_k_random_points(points, k); // resets distances
 			first = false;
 		}
 		else {
-			std::vector<Point1> centroids = computeCentroids(*points, k);
+			centroids = computeCentroids(points, k); // resets distances
 		}
 		int clusterId = 0;
-		
-		//TODO restetare distante 
-		for (int i = 0; i < centroids.size(); i++) { //iterate over the clusters
-			Point1 c = centroids.at(i);
-			for (int j = 0; j < points->size(); j++) {//iterate over the points to assign them to the nearest cluster
-				Point1 p = points->at(j);
-				double dist = euclidianDistance(c, p); //by euclidian distance
-				if (dist < p.minDist) {		//if the distance between a point and curent cluster
+
+		prviouscentroids = centroids;
+
+		for (auto& centroid : centroids) //iterate over the clusters
+		{ 		
+			for (auto& point : points)//iterate over the points to assign them to the nearest cluster
+			{				
+				double dist = euclidianDistance(centroid, point, weighs); //by euclidian distance
+				if (dist < point.minDist) {		//if the distance between a point and curent cluster
 											//is smaller than distance between this point and previous 
 											//cluster, update the point to be part of the 
 											//current cluster and the new distance also.
-					p.minDist = dist;
-					p.cluster = clusterId;
+					point.minDist = dist;
+					point.cluster = clusterId;
 				}
 			}
 			clusterId++;
 		}
+
 		///afisare pixeli la fiecare iteratie dupa actualizarea centroidului
-	}
+		for (const auto& p : points)
+		{
+			std::cout << "P(" << p.x << "," << p.y << ") CLUSTER:" << p.cluster << std::endl;
+		}
+		
+	} while (!sameCentroids(centroids, prviouscentroids));
 	//after the first iteretion the points will not be equal distributed to each cluster
 	//there has to be a second part where the new centroids are computed, done by 
 	//calling computeCentroids method
 }
 
-std::vector<Point1> computeCentroids(std::vector<Point1> points, int k) {
+std::vector<Point1> computeCentroids(std::vector<Point1>& points, const int& k) {
 	std::vector<int> nPoints; //keep track of the number of points in each cluster 
 	std::vector<double> sumX, sumY;//keep track of the sum of coordinates (then the 
 									//average is just the latter divided by the former)
@@ -217,43 +138,30 @@ Mat_<Vec3b> generateImage(std::vector<Point1> points) {
 	Mat_<Vec3b> img(100, 100);
 	for (int i = 0; i < img.rows; i++) {
 		for (int j = 0; j < img.cols; j++) {
-			for (int k = 0; k < points.size; i++) {
+			for (int k = 0; k < points.size(); i++) {
 
 			}
 
 			img(i, j) = 255;
 		}
 	}
+
+	return img;
 }
 
 int main()
 {
-	int op;
-	do
-	{
-		system("cls");
-		destroyAllWindows();
-		printf("Menu:\n");
-		printf(" 1 - Open image\n");
-		printf(" 2 - Open BMP images from folder\n");
-		printf(" 3 - Negative image\n");
-		printf(" 0 - Exit\n\n");
-		printf("Option: ");
-		scanf("%d",&op);
-		switch (op)
-		{
-			case 1:
-				testOpenImage();
-				break;
-			case 2:
-				testOpenImagesFld();
-				break;
-			case 3:
-				testNegativeImage();
-				break;
+	std::vector<Point1> points;
+	points.push_back(Point1{ 2.0, 3.0, 0, 0.0 });
+	points.push_back(Point1{ 10.0, 11.0, 0, 0.0 });
+	points.push_back(Point1{ 3.0, 2.0, 0, 0.0 });
+	points.push_back(Point1{ 11.0, 12.0, 0, 0.0 });
+	points.push_back(Point1{ 3.0, 4.0, 0, 0.0 });
+	points.push_back(Point1{ 9.0, 10.0, 0, 0.0 });
 
-		}
-	}
-	while (op!=0);
+	const WEIGH weighs{ 0.5f, 0.5f, 0.0f, 0.0f, 0.0f };
+
+	kMeansClustering(points, weighs, 2, 2);
+
 	return 0;
 }
