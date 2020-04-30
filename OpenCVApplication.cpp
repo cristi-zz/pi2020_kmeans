@@ -5,11 +5,13 @@
 #include "common.h"
 #include <time.h>
 
+//TODO x,y sa fie vector
 struct Point1 {
 	double x, y;     // coordinates
 	int cluster;     // one way to represent that a point belongs to a specific cluster
 };
 
+//TODO si weigh trebuie tot un vector sa fie
 typedef struct weigh
 {
 	float w1, w2, w3, w4, w5;
@@ -31,6 +33,8 @@ std::vector<Point1> pick_k_random_points(std::vector<Point1>& points, const int&
 }
 
 void computeCentroids(std::vector<Point1>& points, const int& k, std::vector<Point1>& centroids) {
+	//TODO use all points from vectors, not just x,y..
+	
 	std::vector<int> nPoints; //keep track of the number of points in each cluster 
 	std::vector<double> sumX, sumY;//keep track of the sum of coordinates (then the 
 									//average is just the latter divided by the former)
@@ -52,6 +56,7 @@ void computeCentroids(std::vector<Point1>& points, const int& k, std::vector<Poi
 	}
 
 	// Compute the new centroids
+	//TODO division by 0
 	for (int i = 0; i < k; i++) {
 		centroids.at(i).x = sumX[i] / nPoints[i];
 		centroids.at(i).y = sumY[i] / nPoints[i];
@@ -60,6 +65,7 @@ void computeCentroids(std::vector<Point1>& points, const int& k, std::vector<Poi
 
 
 bool sameCentroids(const std::vector<Point1>& centroids, const std::vector<Point1>& prviouscentroids, const double& error) {
+	//TODO trebuie si weighs, also use all from vectos not just x,y
 	int count = 0;
 	for (int i = 0; i < centroids.size(); i++)
 	{
@@ -86,9 +92,9 @@ void kMeansClustering(std::vector<Point1>& points, const int& k, const int& nrRe
 	std::vector<Point1> centroids;
 	std::vector<Point1> prviouscentroids;
 	int reps = 0;
-
+//TODO pick k random points from point vector
 	centroids.push_back(Point1{ 2.0, 3.0, 0 }); //= pick_k_random_points(points, k); // resets distances
-	centroids.push_back(Point1{ 3.0, 2.0, 0 });
+	centroids.push_back(Point1{ 3.0, 2.0, 1 });
 
 	do {
 		
@@ -97,11 +103,11 @@ void kMeansClustering(std::vector<Point1>& points, const int& k, const int& nrRe
 		for (auto& point : points)
 		{
 			double shortest = INFINITY;
-			int clusterId = 0;
+			
 
 			for (auto& centroid : centroids)
 			{	
-				centroid.cluster = clusterId;
+				
 
 				double dist = euclidianDistance(centroid, point, weighs); //by euclidian distance
 				if (dist <= shortest) {		//if the distance between a point and curent cluster
@@ -112,18 +118,28 @@ void kMeansClustering(std::vector<Point1>& points, const int& k, const int& nrRe
 					point.cluster = centroid.cluster;
 				}
 
-				clusterId++;
+			
 			}
 			
 		}
 
-		computeCentroids(points, k, centroids);  // resets distances
+		computeCentroids(points, k, centroids);  
+
 
 		std::cout << "Iteration " << reps << std::endl;
 		for (const auto& p : points)
 		{
 			std::cout << "P(" << p.x << "," << p.y << ") CLUSTER:" << p.cluster << std::endl;
+			
 		}
+		std::cout << std::endl;
+
+		std::cout << "Centroids "<< std::endl;
+		for (const auto& c : centroids)
+		{
+			std::cout << "C(" << c.x << "," << c.y << ")" << std::endl;
+		}
+		std::cout << std::endl;
 		std::cout << std::endl;
 		
 		reps++;
