@@ -171,6 +171,27 @@ Mat_<Vec3b> generateImage(vector<Point1> points) {
 	return img;
 }
 
+vector<Point1> extractFeatures(Mat_<Vec3b> src)
+{
+	vector<Point1> features;
+	for (int i = 0; i < src.rows; i++) {
+		for (int j = 0; j < src.cols; j++) {
+			if ((src(i, j)[0] != 76) && (src(i, j)[1] != 112) && (src(i, j)[2] != 71))
+			{
+				//x  y   R   G  B
+				//------0 1 2
+				//Vec3b(x,y,z)
+				//------B G R
+				vector<double> p { (double)i ,  (double)j, (double)src(i,j)[2], (double)src(i,j)[1], (double)src(i,j)[0] };
+				features.push_back(Point1{ p, 0 });
+			}
+		}
+	}
+	imshow("src",src);
+	return features;
+
+}
+
 int main()
 {
 	vector<Point1> points;
@@ -187,6 +208,14 @@ int main()
 	double error = 0.001;
 
 	kMeansClustering(points, K, numberOfRepetitions, weights, error);
+	char fName[MAX_PATH];
+	while (openFileDlg(fName))
+	{
+		Mat_<Vec3b> src = imread(fName, CV_LOAD_IMAGE_COLOR);
+		vector<Point1> points=extractFeatures(src);
+		std::cout << "P(" << points.at(0).point.at(0) << "," << points.at(0).point.at(1) << "," << points.at(0).point.at(2) << "," << points.at(0).point.at(3) << "," << points.at(0).point.at(4) << ")" << std::endl;
+		waitKey(0);
+	}
 
 	return 0;
 }
