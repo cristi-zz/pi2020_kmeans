@@ -23,7 +23,6 @@ typedef struct weight
 vector<Point1> pick_k_random_points(vector<Point1>& points, const int& k) {
 
 	vector<Point1> centroids;
-	int x = 0, y = 0;
 	srand(time(0));
 	for (int i = 0; i < k; i++) {
 		centroids.push_back(points.at(rand() % (points.size() - 1)));
@@ -34,9 +33,9 @@ vector<Point1> pick_k_random_points(vector<Point1>& points, const int& k) {
 
 void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& centroids) {
 	//TODO use all points from vectors, not just x,y..
-	
+
 	vector<int> nPoints; //keep track of the number of points in each cluster 
-	vector<double> sumX, sumY;//keep track of the sum of coordinates (then the 
+	/*vector<double> sumX, sumY;//keep track of the sum of coordinates (then the
 									//average is just the latter divided by the former)
 
 
@@ -60,18 +59,53 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 	for (int i = 0; i < k; i++) {
 		centroids.at(i).point.at(0) = sumX[i] / nPoints[i];
 		centroids.at(i).point.at(1) = sumY[i] / nPoints[i];
+	}*/
+
+	std::vector<std::vector<double>> sum;
+
+	for (int j = 0; j < k; ++j) {
+		nPoints.push_back(0);
+		sum.push_back({ 0.0 });
+	}
+
+	// Iterate over points to append data to centroids
+	for (int i = 0; i < points.size(); i++) {
+		int clusterId = points.at(i).cluster;
+		nPoints[clusterId] += 1;
+		for (int j = 0; j < points.at(i).point.size(); ++j) {
+			sum[clusterId][j] += points.at(i).point.at(j);
+		}
+	}
+
+	// Compute the new centroids
+	for (int j = 0; j < k; j++) {
+		for (int i = 0; i < k; i++) {
+			centroids.at(i).point.at(j) = sum[j][i] / nPoints[j];
+		}
 	}
 }
 
 
-bool sameCentroids(const vector<Point1>& centroids, const vector<Point1>& prviouscentroids, const double& error) {
+bool sameCentroids(const vector<Point1>& centroids, const vector<Point1>& prviouscentroids, const double& error, const WEIGHT& weighs) {
 	//TODO trebuie si weighs, also use all from vectos not just x,y
 	int count = 0;
-	for (int i = 0; i < centroids.size(); i++)
+	/*for (int i = 0; i < centroids.size(); i++)
 	{
 		double dist = sqrt(pow(centroids.at(i).point.at(0) - prviouscentroids.at(i).point.at(0), 2) + pow(centroids.at(i).point.at(1) - prviouscentroids.at(i).point.at(1), 2));
 
-		if  (dist <= error)	
+		if  (dist <= error)
+		{
+			count++;
+		}
+	}*/
+
+	for (int i = 0; i < centroids.size(); i++)
+	{
+		double dist = 0.0;
+		for (int j = 0; j < sizeof(centroids.at(i).point) / sizeof(centroids.at(i).point.at(0)); j++) {
+			dist += weighs.weights.at(i) * (centroids.at(i).point.at(j) - prviouscentroids.at(i).point.at(j)) * (centroids.at(i).point.at(j) - prviouscentroids.at(i).point.at(j));
+		}
+		if (sqrt(dist) <= error)
 		{
 			count++;
 		}
@@ -82,22 +116,28 @@ bool sameCentroids(const vector<Point1>& centroids, const vector<Point1>& prviou
 double euclidianDistance(Point1 p1, Point1 p2, const WEIGHT& weight) {
 	//ponderi la tarsaturile din puncte => distante ponderate
 	//vectorul de ponderi constant, trimis ca parametru la euclidianDistance
-	double x1 = p1.point.at(0);
-	double x2 = p2.point.at(0);
-	double y1 = p1.point.at(1);
-	double y2 = p2.point.at(1);
-	
-	return sqrt(weight.weights.at(0) * (pow(x1 - x2, 2)) + weight.weights.at(1) * (pow(y1 - y2, 2)));
+	//double x1 = p1.point.at(0);
+	//double x2 = p2.point.at(0);
+	//double y1 = p1.point.at(1);
+	//double y2 = p2.point.at(1);
+
+	//return sqrt(weight.weights.at(0) * (pow(x1 - x2, 2)) + weight.weights.at(1) * (pow(y1 - y2, 2)));
+
+	double result = 0.0;
+	for (int i = 0; i < sizeof(p1.point) / sizeof(p1.point.at(0)); ++i) {
+		result += weight.weights.at(i) * ((p1.point.at(i) - p2.point.at(i)) * (p1.point.at(i) - p2.point.at(i)));
+	}
+	return sqrt(result);
 }
 
 //alegem noi centroizii sa fie unul langa altul ca sa se observe ca se deplaseaza 
 //k = 2
-void kMeansClustering(vector<Point1>& points, const int& k, const int& nrRepetitions,  const WEIGHT& weights,  const double& error) {//the larger nrRepetitions, the better the solution. k-nr of clusters
+void kMeansClustering(vector<Point1>& points, const int& k, const int& nrRepetitions, const WEIGHT& weights, const double& error) {//the larger nrRepetitions, the better the solution. k-nr of clusters
 	vector<Point1> centroids;
 	vector<Point1> prviouscentroids;
 	int reps = 0;
-//TODO pick k random points from point vector
-	vector<double> p1 { 2.0, 3.0 };
+	//TODO pick k random points from point vector
+	vector<double> p1{ 2.0, 3.0 };
 	vector<double> p2{ 3.0, 2.0 };
 	centroids.push_back(Point1{ p1, 0 }); //= pick_k_random_points(points, k); // resets distances
 	centroids.push_back(Point1{ p2, 1 });
@@ -109,8 +149,8 @@ void kMeansClustering(vector<Point1>& points, const int& k, const int& nrRepetit
 			double shortest = INFINITY;
 
 			for (int j = 0; j < centroids.size(); j++)
-			{	
-				
+			{
+
 				double dist = euclidianDistance(points.at(i), centroids.at(j), weights); //by euclidian distance
 				if (dist <= shortest) {		//if the distance between a point and curent cluster
 											//is smaller than distance between this point and previous 
@@ -120,19 +160,19 @@ void kMeansClustering(vector<Point1>& points, const int& k, const int& nrRepetit
 					points.at(i).cluster = centroids.at(j).cluster;
 				}
 
-			
+
 			}
-			
+
 		}
 
-		computeCentroids(points, k, centroids);  
+		computeCentroids(points, k, centroids);
 
 
-		std::cout << "Iteration " << reps << std::endl;
+		/*std::cout << "Iteration " << reps << std::endl;
 		for (const auto& p : points)
 		{
 			std::cout << "P(" << p.point.at(0) << "," << p.point.at(1) << ") CLUSTER:" << p.cluster << std::endl;
-			
+
 		}
 		std::cout << std::endl;
 
@@ -140,13 +180,35 @@ void kMeansClustering(vector<Point1>& points, const int& k, const int& nrRepetit
 		for (const auto& c : centroids)
 		{
 			std::cout << "C(" << c.point.at(0) << "," << c.point.at(1) << ")" << std::endl;
+		}*/
+
+		std::cout << "Iteration " << reps << std::endl;
+		for (const auto& p : points)
+		{
+			std::cout << "P(";
+			for (int i = 0; i < sizeof(p.point) / sizeof(p.point.at(0)); ++i) {
+				std::cout << p.point.at(i) << ",";
+			}
+			std::cout << ") CLUSTER:" << p.cluster << std::endl;
 		}
 		std::cout << std::endl;
+
+		std::cout << "Centroids " << std::endl;
+		for (const auto& c : centroids)
+		{
+			std::cout << "C(";
+			for (int i = 0; i < sizeof(c.point) / sizeof(c.point.at(0)); ++i) {
+				std::cout << c.point.at(i) << ",";
+			}
+			std::cout << ")" << std::endl;
+		}
+
 		std::cout << std::endl;
-		
+		std::cout << std::endl;
+
 		reps++;
 
-	} while (reps < nrRepetitions || !sameCentroids(centroids, prviouscentroids, error));
+	} while (reps < nrRepetitions || !sameCentroids(centroids, prviouscentroids, error, weights));
 	//after the first iteretion the points will not be equal distributed to each cluster
 	//there has to be a second part where the new centroids are computed, done by 
 	//calling computeCentroids method
@@ -182,12 +244,12 @@ vector<Point1> extractFeatures(Mat_<Vec3b> src)
 				//------0 1 2
 				//Vec3b(x,y,z)
 				//------B G R
-				vector<double> p { (double)i ,  (double)j, (double)src(i,j)[2], (double)src(i,j)[1], (double)src(i,j)[0] };
+				vector<double> p{ (double)i ,  (double)j, (double)src(i,j)[2], (double)src(i,j)[1], (double)src(i,j)[0] };
 				features.push_back(Point1{ p, 0 });
 			}
 		}
 	}
-	imshow("src",src);
+	imshow("src", src);
 	return features;
 
 }
@@ -202,7 +264,7 @@ int main()
 	points.push_back(Point1{ {3.0, 4.0}, 0 });
 	points.push_back(Point1{ {9.0, 10.0}, 0 });
 
-	const WEIGHT weights{ {1.0f, 1.0f, 0.0f, 0.0f, 0.0f} };
+	const WEIGHT weights{ {1.0f, 1.0f, 1.0f, 1.0f, 1.0f} };
 	int numberOfRepetitions = 4;
 	int K = 2;
 	double error = 0.001;
@@ -212,7 +274,7 @@ int main()
 	while (openFileDlg(fName))
 	{
 		Mat_<Vec3b> src = imread(fName, CV_LOAD_IMAGE_COLOR);
-		vector<Point1> points=extractFeatures(src);
+		vector<Point1> points = extractFeatures(src);
 		std::cout << "P(" << points.at(0).point.at(0) << "," << points.at(0).point.at(1) << "," << points.at(0).point.at(2) << "," << points.at(0).point.at(3) << "," << points.at(0).point.at(4) << ")" << std::endl;
 		waitKey(0);
 	}
