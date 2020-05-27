@@ -100,7 +100,7 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 	// Compute the new centroids
 	for (int j = 0; j < size; j++) {
 		for (int i = 0; i < k; i++) {
-			centroids.at(i).point.at(j) = sum[j][i] / nPoints[points.at(i).cluster]; // ! PROBLEMA DIVISION BY 0 
+			centroids.at(i).point.at(j) = sum[j][i] / nPoints[points.at(i).cluster];
 		}
 	}
 }
@@ -118,11 +118,13 @@ bool sameCentroids(const vector<Point1>& centroids, const vector<Point1>& prviou
 			count++;
 		}
 	}*/
+	
+	int size = centroids.at(0).point.size();
 
 	for (int i = 0; i < centroids.size(); i++)
 	{
 		double dist = 0.0;
-		for (int j = 0; j < sizeof(centroids.at(i).point) / sizeof(centroids.at(i).point.at(0)); j++) {
+		for (int j = 0; j < size; j++) {
 			dist += weighs.weights.at(i) * (centroids.at(i).point.at(j) - prviouscentroids.at(i).point.at(j)) * (centroids.at(i).point.at(j) - prviouscentroids.at(i).point.at(j));
 		}
 		if (sqrt(dist) <= error)
@@ -299,7 +301,7 @@ int main()
 	points.push_back(Point1{ {9.0, 10.0}, 0 });
 
 	const WEIGHT weights{ {1.0f, 1.0f, 1.0f, 1.0f, 1.0f} };
-	int numberOfRepetitions = 4;
+	int numberOfRepetitions = 3;
 	int K = 2;
 	double error = 0.001;
 
