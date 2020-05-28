@@ -68,7 +68,7 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 	int* nPoints = new int[k];
 
 	for (int i = 0; i < k; ++i) {
-		sum[i] = new int[size + 1];
+		sum[i] = new int[size];
 	}
 
 	for (int j = 0; j < k; ++j) {
@@ -77,14 +77,6 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 			sum[j][i] = 0;
 		}
 	}
-
-	/*for (int i = 0; i < k; ++i) {
-		printf("\n\n --- %d --- \n\n", nPoints[i]);
-		for (int j = 0; j < sizeof(sum[0]) / sizeof(sum[0][0]); ++j) {
-			printf("%d, ", sum[i][j]);
-		}
-		printf("\n");
-	}*/
 
 
 	// Iterate over points to append data to centroids
@@ -97,10 +89,13 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 		}
 	}
 
+	for (int i = 0; i < k; ++i) {
+		printf(" --- %d ----\n", nPoints[i]);
+	}
 	// Compute the new centroids
 	for (int j = 0; j < size; j++) {
 		for (int i = 0; i < k; i++) {
-			centroids.at(i).point.at(j) = sum[j][i] / nPoints[points.at(i).cluster];
+			centroids.at(i).point.at(j) = sum[j][i] / nPoints[i];
 		}
 	}
 }
@@ -138,18 +133,12 @@ bool sameCentroids(const vector<Point1>& centroids, const vector<Point1>& prviou
 double euclidianDistance(Point1 p1, Point1 p2, const WEIGHT& weight) {
 	//ponderi la tarsaturile din puncte => distante ponderate
 	//vectorul de ponderi constant, trimis ca parametru la euclidianDistance
-	//double x1 = p1.point.at(0);
-	//double x2 = p2.point.at(0);
-	//double y1 = p1.point.at(1);
-	//double y2 = p2.point.at(1);
+	double x1 = p1.point.at(0);
+	double x2 = p2.point.at(0);
+	double y1 = p1.point.at(1);
+	double y2 = p2.point.at(1);
 
-	//return sqrt(weight.weights.at(0) * (pow(x1 - x2, 2)) + weight.weights.at(1) * (pow(y1 - y2, 2)));
-
-	double result = 0.0;
-	for (int i = 0; i < p1.point.size(); ++i) {
-		result += (double) weight.weights.at(i) * (pow(p1.point.at(i) - p2.point.at(i), 2));
-	}
-	return sqrt(result);
+	return sqrt(weight.weights.at(0) * (pow(x1 - x2, 2)) + weight.weights.at(1) * (pow(y1 - y2, 2)));
 }
 
 //alegem noi centroizii sa fie unul langa altul ca sa se observe ca se deplaseaza 
@@ -302,16 +291,18 @@ int main()
 
 	const WEIGHT weights{ {1.0f, 1.0f, 1.0f, 1.0f, 1.0f} };
 	int numberOfRepetitions = 3;
-	int K = 2;
+	int K = 5;
 	double error = 0.001;
 
-	kMeansClustering(points, K, numberOfRepetitions, weights, error);
+	//kMeansClustering(points, K, numberOfRepetitions, weights, error);
 	char fName[MAX_PATH];
 	while (openFileDlg(fName))
 	{
 		Mat_<Vec3b> src = imread(fName, CV_LOAD_IMAGE_COLOR);
-		vector<Point1> points = extractFeatures(src);
-		std::cout << "P(" << points.at(0).point.at(0) << "," << points.at(0).point.at(1) << "," << points.at(0).point.at(2) << "," << points.at(0).point.at(3) << "," << points.at(0).point.at(4) << ")" << std::endl;
+		//imshow("src", src);
+		vector<Point1> points1 = extractFeatures(src);
+		kMeansClustering(points1, K, numberOfRepetitions, weights, error);
+		//std::cout << "P(" << points.at(0).point.at(0) << "," << points.at(0).point.at(1) << "," << points.at(0).point.at(2) << "," << points.at(0).point.at(3) << "," << points.at(0).point.at(4) << ")" << std::endl;
 		waitKey(0);
 	}
 
