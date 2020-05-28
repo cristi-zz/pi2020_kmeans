@@ -93,7 +93,10 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 	// Compute the new centroids
 	for (int j = 0; j < size; j++) {
 		for (int i = 0; i < k; i++) {
-			centroids.at(i).point.at(j) = sum[j][i] / nPoints[i];
+			if (0 != nPoints[i])
+				centroids.at(i).point.at(j) = sum[j][i] / nPoints[i];
+			else
+				centroids.at(i).point.at(j) = sum[j][i];
 		}
 	}
 }
@@ -137,6 +140,46 @@ double euclidianDistance(Point1 p1, Point1 p2, const WEIGHT& weight) {
 	double y2 = p2.point.at(1);
 
 	return sqrt(weight.weights.at(0) * (pow(x1 - x2, 2)) + weight.weights.at(1) * (pow(y1 - y2, 2)));
+}
+
+/*
+	similaritate cosinus, valori intre -1 si 1, -1 insemand ca nu exista similaritate intre cei 2 vectori, 1 insemnand ca sunt exact la fel.
+	
+	returnam valoarea negativa a rezultatului din cosinus, pentru ca in functia kmeans, calculam "distanta" cea mai mica, cand sunt la fel
+	vectorii, vom returna -1, insemand ca distanta intre cei doi e mica.
+*/
+double cosineSimilarity(const Point1& p1, const Point1& p2, const WEIGHT& weight)
+{
+	double result = 0.0;
+
+	double sum_numarator = 0.0;
+	double sum_numitor1 = 0.0, sum_numitor2 = 0.0;
+
+	for (int i = 0; i < p1.point.size(); i++)
+	{
+		sum_numarator += p1.point.at(i) * p2.point.at(i) * weight.weights.at(i);
+
+		sum_numitor1 += p1.point.at(i) * p1.point.at(i) * weight.weights.at(i);
+
+		sum_numitor2 += p2.point.at(i) * p2.point.at(i) * weight.weights.at(i);
+	}
+
+	sum_numitor1 = sqrt(sum_numitor1);
+	sum_numitor2 = sqrt(sum_numitor2);
+
+	if (0 == sum_numitor1 * sum_numitor2)
+	{
+		if (sum_numarator > 0)
+			result = 1;
+		else
+			result = -1;
+	}
+	else
+	{
+		result = sum_numarator / (sum_numitor1 * sum_numitor2);
+	}
+	
+	return -result;
 }
 
 //alegem noi centroizii sa fie unul langa altul ca sa se observe ca se deplaseaza 
