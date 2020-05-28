@@ -131,15 +131,20 @@ bool sameCentroids(const vector<Point1>& centroids, const vector<Point1>& prviou
 	return count == centroids.size();
 }
 
-double euclidianDistance(Point1 p1, Point1 p2, const WEIGHT& weight) {
+double euclidianDistance(Point1 p1, Point1 p2, const WEIGHT& weight) {       
 	//ponderi la tarsaturile din puncte => distante ponderate
 	//vectorul de ponderi constant, trimis ca parametru la euclidianDistance
-	double x1 = p1.point.at(0);
+	/*double x1 = p1.point.at(0);
 	double x2 = p2.point.at(0);
 	double y1 = p1.point.at(1);
 	double y2 = p2.point.at(1);
 
-	return sqrt(weight.weights.at(0) * (pow(x1 - x2, 2)) + weight.weights.at(1) * (pow(y1 - y2, 2)));
+	return sqrt(weight.weights.at(0) * (pow(x1 - x2, 2)) + weight.weights.at(1) * (pow(y1 - y2, 2)));*/
+	double result = 0.0;
+	for (int i = 0; i < p1.point.size(); ++i) {
+		result += weight.weights.at(i) * ((p1.point.at(i) - p2.point.at(i)) * (p1.point.at(i) - p2.point.at(i)));
+	}
+	return sqrt(result);
 }
 
 /*
