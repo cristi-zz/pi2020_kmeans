@@ -89,9 +89,7 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 		}
 	}
 
-	for (int i = 0; i < k; ++i) {
-		printf(" --- %d ----\n", nPoints[i]);
-	}
+	
 	// Compute the new centroids
 	for (int j = 0; j < size; j++) {
 		for (int i = 0; i < k; i++) {
@@ -143,17 +141,22 @@ double euclidianDistance(Point1 p1, Point1 p2, const WEIGHT& weight) {
 
 //alegem noi centroizii sa fie unul langa altul ca sa se observe ca se deplaseaza 
 //k = 2
-void kMeansClustering(vector<Point1>& points, const int& k, const int& nrRepetitions, const WEIGHT& weights, const double& error) {//the larger nrRepetitions, the better the solution. k-nr of clusters
+vector<Point1> kMeansClustering(vector<Point1>& points, const int& k, const int& nrRepetitions, const WEIGHT& weights, const double& error) {//the larger nrRepetitions, the better the solution. k-nr of clusters
 	//printf("hasfajfksdjfkjdfsfsf\n");
 	vector<Point1> centroids;
 	vector<Point1> prviouscentroids;
 
 	int reps = 0;
 	//TODO pick k random points from point vector
-	vector<double> p1{ 2.0, 3.0 };
-	vector<double> p2{ 3.0, 2.0 };
-	centroids.push_back(Point1{ p1, 0 }); //= pick_k_random_points(points, k); // resets distances
-	centroids.push_back(Point1{ p2, 1 });
+	//vector<double> p1{ 2.0, 3.0 };
+	//vector<double> p2{ 3.0, 2.0 };
+	//centroids.push_back(Point1{ p1, 0 }); //= pick_k_random_points(points, k); // resets distances
+	//centroids.push_back(Point1{ p2, 1 });
+
+	for (int i = 0; i < k; ++i) {
+		int index = rand() % (points.size());
+		centroids.push_back(Point1{ points.at(index).point, i });
+	}
 
 
 	do {
@@ -237,6 +240,8 @@ void kMeansClustering(vector<Point1>& points, const int& k, const int& nrRepetit
 	//after the first iteretion the points will not be equal distributed to each cluster
 	//there has to be a second part where the new centroids are computed, done by 
 	//calling computeCentroids method
+
+	return points;
 }
 
 
