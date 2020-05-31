@@ -18,6 +18,8 @@ typedef struct weight
 	vector<float> weights; //
 }WEIGHT;
 
+typedef double(*DistanceFunction)(const Point1& p1, const Point1& p2, const WEIGHT& weight);
+
 
 //============pick k random pixels, the initial centroids ======================
 vector<Point1> pick_k_random_points(vector<Point1>& points, const int& k) {
@@ -32,36 +34,7 @@ vector<Point1> pick_k_random_points(vector<Point1>& points, const int& k) {
 }
 
 void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& centroids) {
-	//TODO use all points from vectors, not just x,y..
 
-	//vector<int> nPoints(k); //keep track of the number of points in each cluster 
-	/*vector<double> sumX, sumY;//keep track of the sum of coordinates (then the
-									//average is just the latter divided by the former)
-
-
-	// Initialise with zeroes
-	for (int j = 0; j < k; j++) {
-		nPoints.push_back(0);
-		sumX.push_back(0.0);
-		sumY.push_back(0.0);
-	}
-
-	// Iterate over points to append data to centroids
-	for (int i = 0; i < points.size(); i++) {
-		int clusterId = points.at(i).cluster;
-		nPoints[clusterId]++;
-		sumX[clusterId] += points.at(i).point.at(0);
-		sumY[clusterId] += points.at(i).point.at(1);
-	}
-
-	// Compute the new centroids
-	//TODO division by 0
-	for (int i = 0; i < k; i++) {
-		centroids.at(i).point.at(0) = sumX[i] / nPoints[i];
-		centroids.at(i).point.at(1) = sumY[i] / nPoints[i];
-	}*/
-
-	//std::vector<std::vector<double>> sum(k);
 	int** sum = new int* [k];
 
 	int* nPoints = new int[k];
@@ -105,18 +78,8 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 
 
 bool sameCentroids(const vector<Point1>& centroids, const vector<Point1>& prviouscentroids, const double& error, const WEIGHT& weighs) {
-	//TODO trebuie si weighs, also use all from vectos not just x,y
+
 	int count = 0;
-	/*for (int i = 0; i < centroids.size(); i++)
-	{
-		double dist = sqrt(pow(centroids.at(i).point.at(0) - prviouscentroids.at(i).point.at(0), 2) + pow(centroids.at(i).point.at(1) - prviouscentroids.at(i).point.at(1), 2));
-
-		if  (dist <= error)
-		{
-			count++;
-		}
-	}*/
-
 
 	for (int i = 0; i < centroids.size(); i++)
 	{
@@ -132,15 +95,9 @@ bool sameCentroids(const vector<Point1>& centroids, const vector<Point1>& prviou
 	return count == centroids.size();
 }
 
-double euclidianDistance(Point1 p1, Point1 p2, const WEIGHT& weight) {
+double euclidianDistance(const Point1& p1, const Point1& p2, const WEIGHT& weight) {
 	//ponderi la tarsaturile din puncte => distante ponderate
 	//vectorul de ponderi constant, trimis ca parametru la euclidianDistance
-	/*double x1 = p1.point.at(0);
-	double x2 = p2.point.at(0);
-	double y1 = p1.point.at(1);
-	double y2 = p2.point.at(1);
-
-	return sqrt(weight.weights.at(0) * (pow(x1 - x2, 2)) + weight.weights.at(1) * (pow(y1 - y2, 2)));*/
 	double result = 0.0;
 	for (int i = 0; i < p1.point.size(); ++i) {
 		result += weight.weights.at(i) * ((p1.point.at(i) - p2.point.at(i)) * (p1.point.at(i) - p2.point.at(i)));
@@ -190,23 +147,17 @@ double cosineSimilarity(const Point1& p1, const Point1& p2, const WEIGHT& weight
 
 //alegem noi centroizii sa fie unul langa altul ca sa se observe ca se deplaseaza 
 //k = 2
-vector<Point1> kMeansClustering(vector<Point1>& points1, const int& k, const int& nrRepetitions, const WEIGHT& weights, const double& error, int id) {//the larger nrRepetitions, the better the solution. k-nr of clusters
-	//printf("hasfajfksdjfkjdfsfsf\n");
+vector<Point1> kMeansClustering(vector<Point1>& points1, const int& k, const int& nrRepetitions, const WEIGHT& weights, const double& error, const DistanceFunction distanceFunction) {//the larger nrRepetitions, the better the solution. k-nr of clusters
+
 	vector<Point1> centroids;
 	vector<Point1> prviouscentroids;
 	vector<Point1>& points = points1;
 	int reps = 0;
-	//TODO pick k random points from point vector
-	//vector<double> p1{ 2.0, 3.0 };
-	//vector<double> p2{ 3.0, 2.0 };
-	//centroids.push_back(Point1{ p1, 0 }); //= pick_k_random_points(points, k); // resets distances
-	//centroids.push_back(Point1{ p2, 1 });
 
 	for (int i = 0; i < k; ++i) {
 		int index = rand() % (points.size());
 		centroids.push_back(Point1{ points.at(index).point, i });
 	}
-
 
 
 	do {
@@ -219,86 +170,25 @@ vector<Point1> kMeansClustering(vector<Point1>& points1, const int& k, const int
 			for (int j = 0; j < centroids.size(); j++)
 			{
 				double dist;
-				if (id == 1)
-				{
-					dist = cosineSimilarity(points.at(i), centroids.at(j), weights); //by cosine distance
-				}
-				else {
-					dist = euclidianDistance(points.at(i), centroids.at(j), weights); //by euclidian distance
-				}
-				//printf("%f\n\n\n", dist);
+				
+				dist = distanceFunction(points.at(i), centroids.at(j), weights); 
+				
+
 				if (dist <= shortest) {		//if the distance between a point and curent cluster
 											//is smaller than distance between this point and previous 
 											//cluster, update the point to be part of the 
 											//current cluster and the new distance also.
 					shortest = dist;
 					points.at(i).cluster = centroids.at(j).cluster;
-					//printf("%d : %d\n", i, points.at(i).cluster);
+
 				}
-
-
 			}
-
 		}
 		computeCentroids(points, k, centroids);
 
 
-		/*std::cout << "Iteration " << reps << std::endl;
-		for (const auto& p : points)
-		{
-			std::cout << "P(" << p.point.at(0) << "," << p.point.at(1) << ") CLUSTER:" << p.cluster << std::endl;
-
-		}
-		std::cout << std::endl;
-
-		std::cout << "Centroids "<< std::endl;
-		for (const auto& c : centroids)
-		{
-			std::cout << "C(" << c.point.at(0) << "," << c.point.at(1) << ")" << std::endl;
-		}*/
-		/*int size = points[0].point.size();
-		std::cout << "Iteration " << reps << std::endl;
-		for (const auto& p : points)
-		{
-			std::cout << "P(";
-			for (int i = 0; i < size; ++i) {
-				if (i != size - 1) {
-					std::cout << p.point.at(i) << ", ";
-				}
-				else {
-					std::cout << p.point.at(i);
-				}
-			}
-			std::cout << ") CLUSTER:" << p.cluster << std::endl;
-		}
-		std::cout << std::endl;
-
-		std::cout << "Centroids " << std::endl;
-		int sizeC = centroids[0].point.size();
-		for (const auto& c : centroids)
-		{
-			std::cout << "C(";
-			for (int i = 0; i < sizeC; ++i) {
-				if (i != sizeC - 1) {
-					std::cout << c.point.at(i) << ", ";
-				}
-				else {
-					std::cout << c.point.at(i);
-				}
-			}
-			std::cout << ")" << std::endl;
-		}
-
-		std::cout << std::endl;
-		std::cout << std::endl;*/
-
 		printf("Finished repetition #%d\n", reps);
 		reps++;
-		/*for (const auto& p : centroids)
-		{
-			std::cout << p.point.at(0) << "   " << p.point.at(1) << "   " << p.cluster << std::endl;
-
-		}*/
 
 	} while (reps < nrRepetitions && !sameCentroids(centroids, prviouscentroids, error, weights));
 	//after the first iteretion the points will not be equal distributed to each cluster
@@ -332,13 +222,7 @@ vector<Point1> extractFeatures(Mat_<Vec3b> src)
 	vector<Point1> features;
 	for (int i = 0; i < src.rows; i++) {
 		for (int j = 0; j < src.cols; j++) {
-			//if ((src(i, j)[0] != 76) && (src(i, j)[1] != 112) && (src(i, j)[2] != 71))
-				//if ((src(i, j)[0] != 0) && (src(i, j)[1] != 0) && (src(i, j)[2] != 0))
-			//{
-				//x  y   R   G  B
-				//------0 1 2
-				//Vec3b(x,y,z)
-				//------B G R
+
 			float r = (float)src(i, j)[2] / 255;
 			float g = (float)src(i, j)[1] / 255;
 			float b = (float)src(i, j)[0] / 255;
@@ -402,7 +286,7 @@ vector<Vec3b> getClusterColorPalette() {
 	return v;
 }
 
-void generateKMeansResult(vector<Point1> features, vector<Point1> centroids, Mat_<Vec3b> src, int id) {
+void generateKMeansResult(vector<Point1> features, vector<Point1> centroids, Mat_<Vec3b> src, std::string dispalyName) {
 	Mat_<Vec3b> dst(src.rows, src.cols, -1);
 
 	for (int i = 0; i < dst.rows; ++i) {
@@ -412,29 +296,17 @@ void generateKMeansResult(vector<Point1> features, vector<Point1> centroids, Mat
 	}
 
 	vector<Vec3b> colors;
-	/*for (int i = 0; i < features.size(); ++i) {
-		Vec3b color = colors.at(features.at(i).cluster);
-		dst(features.at(i).point.at(0), features.at(i).point.at(1)) = color;
-		std::cout << color[0] << "  " << color[1] << "  " << color[2] << std::endl;
-	}*/
+
 	for (int i = 0; i < centroids.size(); ++i) {
 		colors.push_back({ src(centroids.at(i).point.at(0), centroids.at(i).point.at(1)) });
 	}
+
 	for (const auto& p : features)
 	{
-		// color = colors.at(p.cluster);
 		dst(p.point.at(0), p.point.at(1)) = colors.at(p.cluster);
-
 	}
 
-	imshow("src", src);
-	if (id == 0)
-	{
-		imshow("euclidianDistance", dst);
-	}
-	else {
-		imshow("cosineDistance", dst);
-	}
+	imshow(dispalyName, dst);
 }
 
 int main()
@@ -453,19 +325,22 @@ int main()
 	int K = 100;
 	double error = 0.001f;
 
-	//kMeansClustering(points, K, numberOfRepetitions, weights, error);
 	char fName[MAX_PATH];
 	while (openFileDlg(fName))
 	{
 		Mat_<Vec3b> src = imread(fName, CV_LOAD_IMAGE_COLOR);
-		//imshow("src", src);
+		imshow("src", src);
+
 		vector<Point1> points1 = extractFeatures(src);
-		vector<Point1> points2 = points1;
-		vector<Point1> centroids = kMeansClustering(points1, K, numberOfRepetitions, weights, error,1);
-		generateKMeansResult(points1, centroids, src, 1);
-		vector<Point1> centroids1 = kMeansClustering(points2, K, numberOfRepetitions, weights, error,0);
-		generateKMeansResult(points2, centroids1, src, 0);
-		//std::cout << "P(" << points.at(0).point.at(0) << "," << points.at(0).point.at(1) << "," << points.at(0).point.at(2) << "," << points.at(0).point.at(3) << "," << points.at(0).point.at(4) << ")" << std::endl;
+		vector<Point1> points2 = points1;	
+
+		vector<Point1> centroids = kMeansClustering(points1, K, numberOfRepetitions, weights, error, &euclidianDistance);
+		generateKMeansResult(points1, centroids, src, "euclid");
+		centroids.clear();
+
+		centroids = kMeansClustering(points2, K, numberOfRepetitions, weights, error, &cosineSimilarity);
+		generateKMeansResult(points2, centroids, src, "cosin");
+
 		waitKey(0);
 	}
 
