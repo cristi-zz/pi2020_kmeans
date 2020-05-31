@@ -1,4 +1,4 @@
-// OpenCVApplication.cpp : Defines the entry point for the console application.
+﻿// OpenCVApplication.cpp : Defines the entry point for the console application.
 //
 
 #include "stdafx.h"
@@ -62,7 +62,7 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 	}*/
 
 	//std::vector<std::vector<double>> sum(k);
-	int** sum = new int*[k];
+	int** sum = new int* [k];
 
 	int* nPoints = new int[k];
 	int size;
@@ -316,8 +316,12 @@ Mat_<Vec3b> generateImage(vector<Point1> points) {
 	return img;
 }
 
+
 vector<Point1> extractFeatures(Mat_<Vec3b> src)
 {
+	Mat_<uchar> h(src.rows, src.cols);
+	Mat_<uchar> s(src.rows, src.cols);
+	Mat_<uchar> v(src.rows, src.cols);
 	vector<Point1> features;
 	for (int i = 0; i < src.rows; i++) {
 		for (int j = 0; j < src.cols; j++) {
@@ -328,9 +332,56 @@ vector<Point1> extractFeatures(Mat_<Vec3b> src)
 				//------0 1 2
 				//Vec3b(x,y,z)
 				//------B G R
-				vector<double> p{ (double)i ,  (double)j, (double)src(i,j)[2], (double)src(i,j)[1], (double)src(i,j)[0] };
-				features.push_back(Point1{ p, 0 });
-			//}
+			float r = (float)src(i, j)[2] / 255;
+			float g = (float)src(i, j)[1] / 255;
+			float b = (float)src(i, j)[0] / 255;
+
+			float M = max(max(r, g), b);
+			float m = min(min(r, g), b);
+
+			float C = M - m;
+
+			float V, S, H;
+			V = M;
+
+			if (V) {
+				S = C / V;
+			}
+			else {
+				S = 0;
+			}
+
+			if (C) {
+				if (r == M) {
+					H = 60 * (g - b) / C;
+				}
+				if (g == M) {
+					H = 120 + 60 * (b - r) / C;
+				}
+				if (b == M) {
+					H = 240 + 60 * (r - g) / C;
+				}
+			}
+			else {
+				H = 0;
+			}
+			if (H < 0) {
+				H = H + 360;
+			}
+
+			float H_norm = H * 255 / 360;
+			float S_norm = S * 255;
+			float V_norm = V * 255;
+
+			h(i, j) = H_norm;
+			s(i, j) = S_norm;
+			v(i, j) = V_norm;
+		}
+	}
+	for (int i = 0; i < src.rows; i++) {
+		for (int j = 0; j < src.cols; j++) {
+			vector<double> p{ (double)i ,  (double)j, (double)src(i,j)[2], (double)src(i,j)[1], (double)src(i,j)[0], (double)h(i,j), (double)s(i,j), (double)v(i,j) };
+			features.push_back(Point1{ p, 0 });
 		}
 	}
 	//imshow("src", src);
@@ -360,7 +411,7 @@ void generateKMeansResult(vector<Point1> features, vector<Point1> centroids, Mat
 		std::cout << color[0] << "  " << color[1] << "  " << color[2] << std::endl;
 	}*/
 	for (int i = 0; i < centroids.size(); ++i) {
-		colors.push_back({ src(centroids.at(i).point.at(0), centroids.at(i).point.at(1))});
+		colors.push_back({ src(centroids.at(i).point.at(0), centroids.at(i).point.at(1)) });
 	}
 	for (const auto& p : features)
 	{
@@ -383,10 +434,10 @@ int main()
 	points.push_back(Point1{ {3.0, 4.0}, 0 });
 	points.push_back(Point1{ {9.0, 10.0}, 0 });
 
-	const WEIGHT weights{ {0.1f, 0.1f, 0.8f, 0.8f, 0.8f} };
+	const WEIGHT weights{ {0.1f, 0.1f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f} };
 	//const WEIGHT weights{ {1.0f, 1.0f, 1.0f, 1.0f, 1.0f} };
 	int numberOfRepetitions = 18;
-	int K = 15;
+	int K = 100;
 	double error = 0.001f;
 
 	//kMeansClustering(points, K, numberOfRepetitions, weights, error);
