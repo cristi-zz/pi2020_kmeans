@@ -67,14 +67,13 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 	int* nPoints = new int[k];
 	int size;
 	for (int i = 0; i < k; ++i) {
-
-		size = points.at(i).point.size();
+		size = centroids.at(i).point.size();
 		sum[i] = new int[size];
 	}
 
 	for (int j = 0; j < k; ++j) {
 		nPoints[j] = 0;
-		size = points.at(j).point.size();
+		size = centroids.at(j).point.size();
 		for (int i = 0; i < size; ++i) {
 			sum[j][i] = 0;
 		}
@@ -92,7 +91,7 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 		}
 	}
 
-	
+	size = centroids.at(0).point.size();
 	// Compute the new centroids
 	for (int j = 0; j < size; j++) {
 		for (int i = 0; i < k; i++) {
@@ -117,13 +116,13 @@ bool sameCentroids(const vector<Point1>& centroids, const vector<Point1>& prviou
 			count++;
 		}
 	}*/
-	
+
 
 	for (int i = 0; i < centroids.size(); i++)
 	{
 		double dist = 0.0;
 		for (int j = 0; j < centroids.at(i).point.size(); j++) {
-			dist += weighs.weights.at(i) * (centroids.at(i).point.at(j) - prviouscentroids.at(i).point.at(j)) * (centroids.at(i).point.at(j) - prviouscentroids.at(i).point.at(j));
+			dist += weighs.weights.at(j) * (centroids.at(i).point.at(j) - prviouscentroids.at(i).point.at(j)) * (centroids.at(i).point.at(j) - prviouscentroids.at(i).point.at(j));
 		}
 		if (sqrt(dist) <= error)
 		{
@@ -133,7 +132,7 @@ bool sameCentroids(const vector<Point1>& centroids, const vector<Point1>& prviou
 	return count == centroids.size();
 }
 
-double euclidianDistance(Point1 p1, Point1 p2, const WEIGHT& weight) {       
+double euclidianDistance(Point1 p1, Point1 p2, const WEIGHT& weight) {
 	//ponderi la tarsaturile din puncte => distante ponderate
 	//vectorul de ponderi constant, trimis ca parametru la euclidianDistance
 	/*double x1 = p1.point.at(0);
@@ -151,7 +150,7 @@ double euclidianDistance(Point1 p1, Point1 p2, const WEIGHT& weight) {
 
 /*
 	similaritate cosinus, valori intre -1 si 1, -1 insemand ca nu exista similaritate intre cei 2 vectori, 1 insemnand ca sunt exact la fel.
-	
+
 	returnam valoarea negativa a rezultatului din cosinus, pentru ca in functia kmeans, calculam "distanta" cea mai mica, cand sunt la fel
 	vectorii, vom returna -1, insemand ca distanta intre cei doi e mica.
 */
@@ -185,7 +184,7 @@ double cosineSimilarity(const Point1& p1, const Point1& p2, const WEIGHT& weight
 	{
 		result = sum_numarator / (sum_numitor1 * sum_numitor2);
 	}
-	
+
 	return -result;
 }
 
@@ -208,7 +207,7 @@ vector<Point1> kMeansClustering(vector<Point1>& points1, const int& k, const int
 		centroids.push_back(Point1{ points.at(index).point, i });
 	}
 
-	
+
 
 	do {
 		prviouscentroids = centroids;
@@ -293,7 +292,7 @@ vector<Point1> kMeansClustering(vector<Point1>& points1, const int& k, const int
 			std::cout << p.point.at(0) << "   " << p.point.at(1) << "   " << p.cluster << std::endl;
 
 		}
-		
+
 	} while (reps < nrRepetitions && !sameCentroids(centroids, prviouscentroids, error, weights));
 	//after the first iteretion the points will not be equal distributed to each cluster
 	//there has to be a second part where the new centroids are computed, done by 
@@ -322,8 +321,8 @@ vector<Point1> extractFeatures(Mat_<Vec3b> src)
 	vector<Point1> features;
 	for (int i = 0; i < src.rows; i++) {
 		for (int j = 0; j < src.cols; j++) {
-			//if ((src(i, j)[0] != 76) && (src(i, j)[1] != 112) && (src(i, j)[2] != 71))
-			if ((src(i, j)[0] != 0) && (src(i, j)[1] != 0) && (src(i, j)[2] != 0))
+			if ((src(i, j)[0] != 76) && (src(i, j)[1] != 112) && (src(i, j)[2] != 71))
+				//if ((src(i, j)[0] != 0) && (src(i, j)[1] != 0) && (src(i, j)[2] != 0))
 			{
 				//x  y   R   G  B
 				//------0 1 2
@@ -346,7 +345,7 @@ vector<Vec3b> getClusterColorPalette() {
 }
 
 void generateKMeansResult(vector<Point1> features, Mat_<Vec3b> src) {
-	Mat_<Vec3b> dst(src.rows, src.cols,-1);
+	Mat_<Vec3b> dst(src.rows, src.cols, -1);
 
 	for (int i = 0; i < dst.rows; ++i) {
 		for (int j = 0; j < dst.cols; ++j) {
@@ -384,7 +383,7 @@ int main()
 	//const WEIGHT weights{ {0.1f, 0.1f, 0.8f, 0.8f, 0.8f} };
 	const WEIGHT weights{ {1.0f, 1.0f, 1.0f, 1.0f, 1.0f} };
 	int numberOfRepetitions = 18;
-	int K = 6;
+	int K = 5;
 	double error = 0.001f;
 
 	//kMeansClustering(points, K, numberOfRepetitions, weights, error);
