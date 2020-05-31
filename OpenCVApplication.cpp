@@ -63,16 +63,18 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 
 	//std::vector<std::vector<double>> sum(k);
 	int** sum = new int*[k];
-	int size = points.at(0).point.size();
 
 	int* nPoints = new int[k];
-
+	int size;
 	for (int i = 0; i < k; ++i) {
+
+		size = points.at(i).point.size();
 		sum[i] = new int[size];
 	}
 
 	for (int j = 0; j < k; ++j) {
 		nPoints[j] = 0;
+		size = points.at(j).point.size();
 		for (int i = 0; i < size; ++i) {
 			sum[j][i] = 0;
 		}
@@ -83,6 +85,7 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 	for (int i = 0; i < points.size(); i++) {
 		int clusterId = points.at(i).cluster;
 		nPoints[clusterId] += 1;
+		size = points.at(i).point.size();
 		for (int j = 0; j < size; ++j) {
 			//printf("%d, %d\n", clusterId, j) ;
 			sum[clusterId][j] += points.at(i).point.at(j);
@@ -94,9 +97,9 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 	for (int j = 0; j < size; j++) {
 		for (int i = 0; i < k; i++) {
 			if (0 != nPoints[i])
-				centroids.at(i).point.at(j) = sum[j][i] / nPoints[i];
+				centroids.at(i).point.at(j) = sum[i][j] / nPoints[i];
 			else
-				centroids.at(i).point.at(j) = sum[j][i];
+				centroids.at(i).point.at(j) = sum[i][j];
 		}
 	}
 }
@@ -188,11 +191,11 @@ double cosineSimilarity(const Point1& p1, const Point1& p2, const WEIGHT& weight
 
 //alegem noi centroizii sa fie unul langa altul ca sa se observe ca se deplaseaza 
 //k = 2
-vector<Point1> kMeansClustering(vector<Point1>& points, const int& k, const int& nrRepetitions, const WEIGHT& weights, const double& error) {//the larger nrRepetitions, the better the solution. k-nr of clusters
+vector<Point1> kMeansClustering(vector<Point1>& points1, const int& k, const int& nrRepetitions, const WEIGHT& weights, const double& error) {//the larger nrRepetitions, the better the solution. k-nr of clusters
 	//printf("hasfajfksdjfkjdfsfsf\n");
 	vector<Point1> centroids;
 	vector<Point1> prviouscentroids;
-
+	vector<Point1>& points = points1;
 	int reps = 0;
 	//TODO pick k random points from point vector
 	//vector<double> p1{ 2.0, 3.0 };
@@ -205,11 +208,13 @@ vector<Point1> kMeansClustering(vector<Point1>& points, const int& k, const int&
 		centroids.push_back(Point1{ points.at(index).point, i });
 	}
 
+	
 
 	do {
 		prviouscentroids = centroids;
 		for (int i = 0; i < points.size(); i++)
 		{
+
 			double shortest = INFINITY;
 
 			for (int j = 0; j < centroids.size(); j++)
@@ -283,12 +288,16 @@ vector<Point1> kMeansClustering(vector<Point1>& points, const int& k, const int&
 
 		printf("Finished repetition #%d\n", reps);
 		reps++;
+		for (const auto& p : centroids)
+		{
+			std::cout << p.point.at(0) << "   " << p.point.at(1) << "   " << p.cluster << std::endl;
 
+		}
+		
 	} while (reps < nrRepetitions && !sameCentroids(centroids, prviouscentroids, error, weights));
 	//after the first iteretion the points will not be equal distributed to each cluster
 	//there has to be a second part where the new centroids are computed, done by 
 	//calling computeCentroids method
-
 	return points;
 }
 
@@ -313,7 +322,8 @@ vector<Point1> extractFeatures(Mat_<Vec3b> src)
 	vector<Point1> features;
 	for (int i = 0; i < src.rows; i++) {
 		for (int j = 0; j < src.cols; j++) {
-			if ((src(i, j)[0] != 76) && (src(i, j)[1] != 112) && (src(i, j)[2] != 71))
+			//if ((src(i, j)[0] != 76) && (src(i, j)[1] != 112) && (src(i, j)[2] != 71))
+			if ((src(i, j)[0] != 0) && (src(i, j)[1] != 0) && (src(i, j)[2] != 0))
 			{
 				//x  y   R   G  B
 				//------0 1 2
@@ -336,18 +346,25 @@ vector<Vec3b> getClusterColorPalette() {
 }
 
 void generateKMeansResult(vector<Point1> features, Mat_<Vec3b> src) {
-	Mat_<Vec3b> dst(src.rows, src.cols);
+	Mat_<Vec3b> dst(src.rows, src.cols,-1);
 
 	for (int i = 0; i < dst.rows; ++i) {
 		for (int j = 0; j < dst.cols; ++j) {
-			dst(i, j) = (255, 255, 255);
+			dst(i, j) = { 255, 255, 255 };
 		}
 	}
 
 	vector<Vec3b> colors = getClusterColorPalette();
-	for (int i = 0; i < features.size(); ++i) {
+	/*for (int i = 0; i < features.size(); ++i) {
 		Vec3b color = colors.at(features.at(i).cluster);
 		dst(features.at(i).point.at(0), features.at(i).point.at(1)) = color;
+		std::cout << color[0] << "  " << color[1] << "  " << color[2] << std::endl;
+	}*/
+	for (const auto& p : features)
+	{
+		Vec3b color = colors.at(p.cluster);
+		dst(p.point.at(0), p.point.at(1)) = color;
+
 	}
 
 	imshow("src", src);
@@ -364,10 +381,11 @@ int main()
 	points.push_back(Point1{ {3.0, 4.0}, 0 });
 	points.push_back(Point1{ {9.0, 10.0}, 0 });
 
+	//const WEIGHT weights{ {0.1f, 0.1f, 0.8f, 0.8f, 0.8f} };
 	const WEIGHT weights{ {1.0f, 1.0f, 1.0f, 1.0f, 1.0f} };
-	int numberOfRepetitions = 3;
-	int K = 5;
-	double error = 0.001;
+	int numberOfRepetitions = 18;
+	int K = 6;
+	double error = 0.001f;
 
 	//kMeansClustering(points, K, numberOfRepetitions, weights, error);
 	char fName[MAX_PATH];
@@ -376,8 +394,7 @@ int main()
 		Mat_<Vec3b> src = imread(fName, CV_LOAD_IMAGE_COLOR);
 		//imshow("src", src);
 		vector<Point1> points1 = extractFeatures(src);
-		kMeansClustering(points1, K, numberOfRepetitions, weights, error);
-		generateKMeansResult(points1, src);
+		generateKMeansResult(kMeansClustering(points1, K, numberOfRepetitions, weights, error), src);
 		//std::cout << "P(" << points.at(0).point.at(0) << "," << points.at(0).point.at(1) << "," << points.at(0).point.at(2) << "," << points.at(0).point.at(3) << "," << points.at(0).point.at(4) << ")" << std::endl;
 		waitKey(0);
 	}
