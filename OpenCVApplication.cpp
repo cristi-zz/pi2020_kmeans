@@ -287,17 +287,17 @@ vector<Point1> kMeansClustering(vector<Point1>& points1, const int& k, const int
 
 		printf("Finished repetition #%d\n", reps);
 		reps++;
-		for (const auto& p : centroids)
+		/*for (const auto& p : centroids)
 		{
 			std::cout << p.point.at(0) << "   " << p.point.at(1) << "   " << p.cluster << std::endl;
 
-		}
+		}*/
 
 	} while (reps < nrRepetitions && !sameCentroids(centroids, prviouscentroids, error, weights));
 	//after the first iteretion the points will not be equal distributed to each cluster
 	//there has to be a second part where the new centroids are computed, done by 
 	//calling computeCentroids method
-	return points;
+	return centroids;
 }
 
 
@@ -321,16 +321,16 @@ vector<Point1> extractFeatures(Mat_<Vec3b> src)
 	vector<Point1> features;
 	for (int i = 0; i < src.rows; i++) {
 		for (int j = 0; j < src.cols; j++) {
-			if ((src(i, j)[0] != 76) && (src(i, j)[1] != 112) && (src(i, j)[2] != 71))
+			//if ((src(i, j)[0] != 76) && (src(i, j)[1] != 112) && (src(i, j)[2] != 71))
 				//if ((src(i, j)[0] != 0) && (src(i, j)[1] != 0) && (src(i, j)[2] != 0))
-			{
+			//{
 				//x  y   R   G  B
 				//------0 1 2
 				//Vec3b(x,y,z)
 				//------B G R
 				vector<double> p{ (double)i ,  (double)j, (double)src(i,j)[2], (double)src(i,j)[1], (double)src(i,j)[0] };
 				features.push_back(Point1{ p, 0 });
-			}
+			//}
 		}
 	}
 	//imshow("src", src);
@@ -344,7 +344,7 @@ vector<Vec3b> getClusterColorPalette() {
 	return v;
 }
 
-void generateKMeansResult(vector<Point1> features, Mat_<Vec3b> src) {
+void generateKMeansResult(vector<Point1> features, vector<Point1> centroids, Mat_<Vec3b> src) {
 	Mat_<Vec3b> dst(src.rows, src.cols, -1);
 
 	for (int i = 0; i < dst.rows; ++i) {
@@ -353,16 +353,19 @@ void generateKMeansResult(vector<Point1> features, Mat_<Vec3b> src) {
 		}
 	}
 
-	vector<Vec3b> colors = getClusterColorPalette();
+	vector<Vec3b> colors;
 	/*for (int i = 0; i < features.size(); ++i) {
 		Vec3b color = colors.at(features.at(i).cluster);
 		dst(features.at(i).point.at(0), features.at(i).point.at(1)) = color;
 		std::cout << color[0] << "  " << color[1] << "  " << color[2] << std::endl;
 	}*/
+	for (int i = 0; i < centroids.size(); ++i) {
+		colors.push_back({ src(centroids.at(i).point.at(0), centroids.at(i).point.at(1))});
+	}
 	for (const auto& p : features)
 	{
-		Vec3b color = colors.at(p.cluster);
-		dst(p.point.at(0), p.point.at(1)) = color;
+		// color = colors.at(p.cluster);
+		dst(p.point.at(0), p.point.at(1)) = colors.at(p.cluster);
 
 	}
 
@@ -380,10 +383,10 @@ int main()
 	points.push_back(Point1{ {3.0, 4.0}, 0 });
 	points.push_back(Point1{ {9.0, 10.0}, 0 });
 
-	//const WEIGHT weights{ {0.1f, 0.1f, 0.8f, 0.8f, 0.8f} };
-	const WEIGHT weights{ {1.0f, 1.0f, 1.0f, 1.0f, 1.0f} };
+	const WEIGHT weights{ {0.1f, 0.1f, 0.8f, 0.8f, 0.8f} };
+	//const WEIGHT weights{ {1.0f, 1.0f, 1.0f, 1.0f, 1.0f} };
 	int numberOfRepetitions = 18;
-	int K = 5;
+	int K = 15;
 	double error = 0.001f;
 
 	//kMeansClustering(points, K, numberOfRepetitions, weights, error);
@@ -393,7 +396,8 @@ int main()
 		Mat_<Vec3b> src = imread(fName, CV_LOAD_IMAGE_COLOR);
 		//imshow("src", src);
 		vector<Point1> points1 = extractFeatures(src);
-		generateKMeansResult(kMeansClustering(points1, K, numberOfRepetitions, weights, error), src);
+		vector<Point1> centroids = kMeansClustering(points1, K, numberOfRepetitions, weights, error);
+		generateKMeansResult(points1, centroids, src);
 		//std::cout << "P(" << points.at(0).point.at(0) << "," << points.at(0).point.at(1) << "," << points.at(0).point.at(2) << "," << points.at(0).point.at(3) << "," << points.at(0).point.at(4) << ")" << std::endl;
 		waitKey(0);
 	}
