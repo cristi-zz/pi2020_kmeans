@@ -20,7 +20,7 @@ typedef struct weight
 
 typedef double(*DistanceFunction)(const Point1& p1, const Point1& p2, const WEIGHT& weight);
 
-
+//deprecated
 //============pick k random pixels, the initial centroids ======================
 vector<Point1> pick_k_random_points(vector<Point1>& points, const int& k) {
 
@@ -145,6 +145,16 @@ double cosineSimilarity(const Point1& p1, const Point1& p2, const WEIGHT& weight
 	return -result;
 }
 
+double L1Norm(const Point1& p1, const Point1& p2, const WEIGHT& weight)
+{
+	double sum = 0.0;
+	for (int i = 0; i < p1.point.size(); i++)
+	{
+		sum += abs(p1.point.at(i) - p2.point.at(i));
+	}
+	return sum;
+}
+
 //alegem noi centroizii sa fie unul langa altul ca sa se observe ca se deplaseaza 
 //k = 2
 vector<Point1> kMeansClustering(vector<Point1>& points1, const int& k, const int& nrRepetitions, const WEIGHT& weights, const double& error, const DistanceFunction distanceFunction) {//the larger nrRepetitions, the better the solution. k-nr of clusters
@@ -194,6 +204,7 @@ vector<Point1> kMeansClustering(vector<Point1>& points1, const int& k, const int
 	//after the first iteretion the points will not be equal distributed to each cluster
 	//there has to be a second part where the new centroids are computed, done by 
 	//calling computeCentroids method
+	std::cout << std::endl;
 	return centroids;
 }
 
@@ -280,6 +291,7 @@ vector<Point1> extractFeatures(Mat_<Vec3b> src)
 
 }
 
+//deprecated
 vector<Vec3b> getClusterColorPalette() {
 	vector<Vec3b> v{ { 0, 0, 0 }, { 0, 0, 255 }, { 0, 255, 255 }, { 0, 255, 0 }, { 255, 255, 0 }, { 255, 0, 255 }, { 128, 0, 128 }, { 255, 0, 0 } , { 0, 128, 0 },
 	{ 128, 128, 128 } };
@@ -311,13 +323,6 @@ void generateKMeansResult(vector<Point1> features, vector<Point1> centroids, Mat
 
 int main()
 {
-	vector<Point1> points;
-	points.push_back(Point1{ {2.0, 3.0}, 0 });
-	points.push_back(Point1{ {10.0, 11.0}, 0 });
-	points.push_back(Point1{ {3.0, 2.0}, 0 });
-	points.push_back(Point1{ {11.0, 12.0}, 0 });
-	points.push_back(Point1{ {3.0, 4.0}, 0 });
-	points.push_back(Point1{ {9.0, 10.0}, 0 });
 
 	const WEIGHT weights{ {0.1f, 0.1f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f} };
 	//const WEIGHT weights{ {1.0f, 1.0f, 1.0f, 1.0f, 1.0f} };
@@ -332,14 +337,22 @@ int main()
 		imshow("src", src);
 
 		vector<Point1> points1 = extractFeatures(src);
-		vector<Point1> points2 = points1;	
+		vector<Point1> points2 = points1;
+		vector<Point1> points3 = points1;
 
+		std::cout << "Euclidean Distance" << std::endl;
 		vector<Point1> centroids = kMeansClustering(points1, K, numberOfRepetitions, weights, error, &euclidianDistance);
 		generateKMeansResult(points1, centroids, src, "euclid");
-		centroids.clear();
 
+		std::cout << "Cosine Distance" << std::endl;
+		centroids.clear();
 		centroids = kMeansClustering(points2, K, numberOfRepetitions, weights, error, &cosineSimilarity);
 		generateKMeansResult(points2, centroids, src, "cosin");
+
+		std::cout << "L1(Manhattan) Distance" << std::endl;
+		centroids.clear();
+		centroids = kMeansClustering(points3, K, numberOfRepetitions, weights, error, &L1Norm);
+		generateKMeansResult(points3, centroids, src, "L1");
 
 		waitKey(0);
 	}
