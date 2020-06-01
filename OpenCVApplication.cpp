@@ -333,31 +333,60 @@ int main()
 	char fName[MAX_PATH];
 	while (openFileDlg(fName))
 	{
-		Mat_<Vec3b> src = imread(fName, CV_LOAD_IMAGE_COLOR);
-		imshow("src", src);
+		system("cls");
+		destroyAllWindows();
 
+		Mat_<Vec3b> src = imread(fName, CV_LOAD_IMAGE_COLOR);
+		
 		vector<Point1> points1 = extractFeatures(src);
 		vector<Point1> points2 = points1;
 		vector<Point1> points3 = points1;
 
-		for (auto k : K)
-		{
-			std::cout << "Euclidean Distance" << std::endl;
-			vector<Point1> centroids = kMeansClustering(points1, k, numberOfRepetitions, weights, error, &euclidianDistance);
-			generateKMeansResult(points1, centroids, src, "euclid_" + to_string(k));
-
-			std::cout << "Cosine Distance" << std::endl;
-			centroids.clear();
-			centroids = kMeansClustering(points2, k, numberOfRepetitions, weights, error, &cosineSimilarity);
-			generateKMeansResult(points2, centroids, src, "cosin_" + to_string(k));
-
-			std::cout << "L1(Manhattan) Distance" << std::endl;
-			centroids.clear();
-			centroids = kMeansClustering(points3, k, numberOfRepetitions, weights, error, &L1Norm);
-			generateKMeansResult(points3, centroids, src, "L1_" + to_string(k));
-		}
+		int k_input = 0;
+		cin.clear();
+		std::cout << "Select value K (0 for running k=[8, 20, 50 ,100, 200]):";
+		std::cin >> k_input;
 		
+		if (k_input == 0)
+		{
+			for (auto k : K)
+			{
+				std::cout << "Euclidean Distance, " << to_string(k) <<std::endl;
+				vector<Point1> centroids = kMeansClustering(points1, k, numberOfRepetitions, weights, error, &euclidianDistance);
+				generateKMeansResult(points1, centroids, src, "eu" + to_string(k));
 
+				std::cout << "Cosine Distance, " << to_string(k) << std::endl;
+				centroids.clear();
+				centroids = kMeansClustering(points2, k, numberOfRepetitions, weights, error, &cosineSimilarity);
+				generateKMeansResult(points2, centroids, src, "cos" + to_string(k));
+
+				std::cout << "L1(Manhattan) Distance, " << to_string(k) << std::endl;
+				centroids.clear();
+				centroids = kMeansClustering(points3, k, numberOfRepetitions, weights, error, &L1Norm);
+				generateKMeansResult(points3, centroids, src, "man" + to_string(k));
+			}
+		}
+		else
+		{
+			std::cout << "Euclidean Distance, " << to_string(k_input) << std::endl;
+			vector<Point1> centroids = kMeansClustering(points1, k_input, numberOfRepetitions, weights, error, &euclidianDistance);
+			generateKMeansResult(points1, centroids, src, "eu" + to_string(k_input));
+
+			std::cout << "Cosine Distance, " << to_string(k_input) << std::endl;
+			centroids.clear();
+			centroids = kMeansClustering(points2, k_input, numberOfRepetitions, weights, error, &cosineSimilarity);
+			generateKMeansResult(points2, centroids, src, "cos" + to_string(k_input));
+
+			std::cout << "L1(Manhattan) Distance, " << to_string(k_input) << std::endl;
+			centroids.clear();
+			centroids = kMeansClustering(points3, k_input, numberOfRepetitions, weights, error, &L1Norm);
+			generateKMeansResult(points3, centroids, src, "man" + to_string(k_input));
+		}
+
+		namedWindow("src");
+		moveWindow("src", 20, 20);
+		imshow("src", src);
+		cin.clear();
 		waitKey(0);
 	}
 
