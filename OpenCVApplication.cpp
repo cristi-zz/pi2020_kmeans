@@ -150,7 +150,7 @@ double L1Norm(const Point1& p1, const Point1& p2, const WEIGHT& weight)
 	double sum = 0.0;
 	for (int i = 0; i < p1.point.size(); i++)
 	{
-		sum += abs(p1.point.at(i) - p2.point.at(i));
+		sum += abs(weight.weights.at(i) * (p1.point.at(i) - p2.point.at(i)));
 	}
 	return sum;
 }
@@ -327,7 +327,7 @@ int main()
 	const WEIGHT weights{ {0.1f, 0.1f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f} };
 	//const WEIGHT weights{ {1.0f, 1.0f, 1.0f, 1.0f, 1.0f} };
 	int numberOfRepetitions = 18;
-	int K = 100;
+	int K[5] = { 8, 20, 50 ,100, 200 };
 	double error = 0.001f;
 
 	char fName[MAX_PATH];
@@ -340,19 +340,23 @@ int main()
 		vector<Point1> points2 = points1;
 		vector<Point1> points3 = points1;
 
-		std::cout << "Euclidean Distance" << std::endl;
-		vector<Point1> centroids = kMeansClustering(points1, K, numberOfRepetitions, weights, error, &euclidianDistance);
-		generateKMeansResult(points1, centroids, src, "euclid");
+		for (auto k : K)
+		{
+			std::cout << "Euclidean Distance" << std::endl;
+			vector<Point1> centroids = kMeansClustering(points1, k, numberOfRepetitions, weights, error, &euclidianDistance);
+			generateKMeansResult(points1, centroids, src, "euclid_" + to_string(k));
 
-		std::cout << "Cosine Distance" << std::endl;
-		centroids.clear();
-		centroids = kMeansClustering(points2, K, numberOfRepetitions, weights, error, &cosineSimilarity);
-		generateKMeansResult(points2, centroids, src, "cosin");
+			std::cout << "Cosine Distance" << std::endl;
+			centroids.clear();
+			centroids = kMeansClustering(points2, k, numberOfRepetitions, weights, error, &cosineSimilarity);
+			generateKMeansResult(points2, centroids, src, "cosin_" + to_string(k));
 
-		std::cout << "L1(Manhattan) Distance" << std::endl;
-		centroids.clear();
-		centroids = kMeansClustering(points3, K, numberOfRepetitions, weights, error, &L1Norm);
-		generateKMeansResult(points3, centroids, src, "L1");
+			std::cout << "L1(Manhattan) Distance" << std::endl;
+			centroids.clear();
+			centroids = kMeansClustering(points3, k, numberOfRepetitions, weights, error, &L1Norm);
+			generateKMeansResult(points3, centroids, src, "L1_" + to_string(k));
+		}
+		
 
 		waitKey(0);
 	}
