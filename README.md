@@ -24,7 +24,8 @@ Pași în algoritmul K-Means:
    Distanta Manhattan reprezinta distanța dintre două puncte dintr-o grilă bazată pe o cale strict orizontală și / sau verticală (adică de-a lungul liniilor de grilă). 
   Similaritate cosinus este folosita in general ca metrică pentru măsurarea distanței atunci când magnitudinea vectorilor nu contează. Aceasta are valori intre -1 si 1, -1 insemand ca nu exista similaritate intre cei 2 vectori, 1 insemnand ca sunt exact la fel.
 
-
+Imaginea sursa pe care am facut testele:
+![kmeansSrc](https://user-images.githubusercontent.com/44845472/83761916-9d663500-a67f-11ea-9fd2-79dcf141d3d6.PNG)
 
 TUTORIAL GIT
 
