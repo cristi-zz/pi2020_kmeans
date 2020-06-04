@@ -29,6 +29,26 @@ Imaginea sursa pe care am facut testele: <br />
 <br />
 Imaginile rezultate, corespunzatoare distantei euclidiene, cosine similarity si distantei Manhattan, pentru K=8 clustere: <br />
 ![kmeans8](https://user-images.githubusercontent.com/44845472/83762235-fe8e0880-a67f-11ea-98dd-ecf8b6877804.PNG)
+<br />
+Imaginile rezultate, corespunzatoare distantei euclidiene, cosine similarity si distantei Manhattan, pt. K=20 clustere: <br />
+![kmeans20](https://user-images.githubusercontent.com/44845472/83762410-2bdab680-a680-11ea-8455-8fefce7ea928.PNG)
+<br />
+
+Imaginile rezultate, corespunzatoare distantei euclidiene, cosine similarity si distantei Manhattan, pt. K=50 clustere: <br />
+![kmeans50](https://user-images.githubusercontent.com/44845472/83762486-44e36780-a680-11ea-98b0-3c8678a56137.PNG)
+<br />
+
+Imaginile rezultate, corespunzatoare distantei euclidiene, cosine similarity si distantei Manhattan, pt. K=100 clustere: <br />
+![kmeans50](https://user-images.githubusercontent.com/44845472/83762486-44e36780-a680-11ea-98b0-3c8678a56137.PNG)
+<br />
+
+Imaginile rezultate, corespunzatoare distantei euclidiene, cosine similarity si distantei Manhattan, pt. K=100 clustere: <br />
+![kmeans100](https://user-images.githubusercontent.com/44845472/83762547-52005680-a680-11ea-8208-8abb1fd71c40.PNG)
+<br />
+
+Imaginile rezultate, corespunzatoare distantei euclidiene, cosine similarity si distantei Manhattan, pt. K=200 clustere: <br />
+![kmeans200](https://user-images.githubusercontent.com/44845472/83762604-62183600-a680-11ea-9465-68fd5eaf3c0c.PNG)
+<br />
 
 TUTORIAL GIT
 
