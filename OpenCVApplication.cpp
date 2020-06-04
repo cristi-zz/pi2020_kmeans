@@ -69,9 +69,21 @@ void computeCentroids(vector<Point1>& points, const int& k, vector<Point1>& cent
 	for (int j = 0; j < size; j++) {
 		for (int i = 0; i < k; i++) {
 			if (0 != nPoints[i])
-				centroids.at(i).point.at(j) = sum[i][j] / nPoints[i];
+			{
+				//auto x = sum[centroids.at(i).cluster][j];
+				//auto y = nPoints[centroids.at(i).cluster];
+				auto x = sum[i][j];
+				auto y = nPoints[i];
+				centroids.at(i).point.at(j) = x / y;
+			}
+				
 			else
-				centroids.at(i).point.at(j) = sum[i][j];
+			{
+				//auto x = sum[centroids.at(i).cluster][j];
+				auto x = sum[i][j];
+				centroids.at(i).point.at(j) = x;
+			}
+				
 		}
 	}
 }
@@ -171,6 +183,7 @@ vector<Point1> kMeansClustering(vector<Point1>& points1, const int& k, const int
 
 
 	do {
+
 		prviouscentroids = centroids;
 		for (int i = 0; i < points.size(); i++)
 		{
@@ -184,7 +197,7 @@ vector<Point1> kMeansClustering(vector<Point1>& points1, const int& k, const int
 				dist = distanceFunction(points.at(i), centroids.at(j), weights); 
 				
 
-				if (dist <= shortest) {		//if the distance between a point and curent cluster
+				if (dist < shortest) {		//if the distance between a point and curent cluster
 											//is smaller than distance between this point and previous 
 											//cluster, update the point to be part of the 
 											//current cluster and the new distance also.
@@ -225,7 +238,7 @@ Mat_<Vec3b> generateImage(vector<Point1> points) {
 }
 
 
-vector<Point1> extractFeatures(Mat_<Vec3b> src)
+vector<Point1> extractFeatures(Mat_<Vec3b> src, int mode)
 {
 	Mat_<uchar> h(src.rows, src.cols);
 	Mat_<uchar> s(src.rows, src.cols);
@@ -280,10 +293,28 @@ vector<Point1> extractFeatures(Mat_<Vec3b> src)
 			v(i, j) = V_norm;
 		}
 	}
-	for (int i = 0; i < src.rows; i++) {
-		for (int j = 0; j < src.cols; j++) {
-			vector<double> p{ (double)i ,  (double)j, (double)src(i,j)[2], (double)src(i,j)[1], (double)src(i,j)[0], (double)h(i,j), (double)s(i,j), (double)v(i,j) };
-			features.push_back(Point1{ p, 0 });
+	if (mode == 1)
+		for (int i = 0; i < src.rows; i++) {
+			for (int j = 0; j < src.cols; j++) {
+
+				//if(src(i, j)[2]!=0, (double)src(i, j)[1]!=0, (double)src(i, j)[0]!=0)
+				{
+					vector<double> p{ (double)i ,  (double)j, (double)src(i,j)[2], (double)src(i,j)[1], (double)src(i,j)[0], (double)h(i,j), (double)s(i,j), (double)v(i,j) };
+					features.push_back(Point1{ p, 0 });
+				}
+			}
+		}
+	else
+	{
+		for (int i = 0; i < src.rows; i++) {
+			for (int j = 0; j < src.cols; j++) {
+
+				if(src(i, j)[2]!=0, (double)src(i, j)[1]!=0, (double)src(i, j)[0]!=0)
+				{
+					vector<double> p{ (double)i ,  (double)j, (double)src(i,j)[2], (double)src(i,j)[1], (double)src(i,j)[0], (double)h(i,j), (double)s(i,j), (double)v(i,j) };
+					features.push_back(Point1{ p, 0 });
+				}
+			}
 		}
 	}
 	//imshow("src", src);
@@ -298,25 +329,35 @@ vector<Vec3b> getClusterColorPalette() {
 	return v;
 }
 
-void generateKMeansResult(vector<Point1> features, vector<Point1> centroids, Mat_<Vec3b> src, std::string dispalyName) {
+void generateKMeansResult(vector<Point1> features, vector<Point1> centroids, Mat_<Vec3b> src, std::string dispalyName, int mode) {
 	Mat_<Vec3b> dst(src.rows, src.cols, -1);
 
 	for (int i = 0; i < dst.rows; ++i) {
 		for (int j = 0; j < dst.cols; ++j) {
-			dst(i, j) = { 255, 255, 255 };
+			dst(i, j) = { 0, 0, 0 };
 		}
 	}
 
 	vector<Vec3b> colors;
+	vector<Vec3b> v{ { 125, 0, 255 } ,{ 0, 0, 255 }, { 0, 255, 255 }, { 0, 255, 0 }, { 255, 255, 0 }, { 255, 0, 255 }, { 128, 0, 128 }, { 255, 0, 0 } , { 0, 128, 0 },
+	{ 128, 128, 128 } };
+
+
 
 	for (int i = 0; i < centroids.size(); ++i) {
-		colors.push_back({ src(centroids.at(i).point.at(0), centroids.at(i).point.at(1)) });
+		colors.push_back(Vec3b(centroids.at(i).point.at(4), centroids.at(i).point.at(3), centroids.at(i).point.at(2)));
 	}
 
-	for (const auto& p : features)
-	{
-		dst(p.point.at(0), p.point.at(1)) = colors.at(p.cluster);
-	}
+	if (mode == 1)
+		for (const auto& p : features)
+		{
+			dst(p.point.at(0), p.point.at(1)) =colors.at(p.cluster);
+		}
+	else
+		for (const auto& p : features)
+		{
+			dst(p.point.at(0), p.point.at(1)) = v.at(p.cluster);
+		}
 
 	imshow(dispalyName, dst);
 }
@@ -324,8 +365,8 @@ void generateKMeansResult(vector<Point1> features, vector<Point1> centroids, Mat
 int main()
 {
 
-	const WEIGHT weights{ {0.1f, 0.1f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f} };
-	//const WEIGHT weights{ {1.0f, 1.0f, 1.0f, 1.0f, 1.0f} };
+	//const WEIGHT weights{ {0.0f, 0.0f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f} };
+	const WEIGHT weights{ {0.6f, 0.6f,1.0f, 1.0f, 1.0f, 1.0f, 1.0f,1.0f } };
 	int numberOfRepetitions = 18;
 	int K[5] = { 8, 20, 50 ,100, 200 };
 	double error = 0.001f;
@@ -338,9 +379,17 @@ int main()
 
 		Mat_<Vec3b> src = imread(fName, CV_LOAD_IMAGE_COLOR);
 		
-		vector<Point1> points1 = extractFeatures(src);
+
+		std::cout << "Select Mode - 0 for random colors, 1 for real colors" << std::endl;
+		int mode = 1;
+		std::cin >> mode;
+
+		vector<Point1> points1 = extractFeatures(src, mode);
 		vector<Point1> points2 = points1;
 		vector<Point1> points3 = points1;
+
+
+
 
 		int k_input = 0;
 		cin.clear();
@@ -353,34 +402,34 @@ int main()
 			{
 				std::cout << "Euclidean Distance, " << to_string(k) <<std::endl;
 				vector<Point1> centroids = kMeansClustering(points1, k, numberOfRepetitions, weights, error, &euclidianDistance);
-				generateKMeansResult(points1, centroids, src, "eu" + to_string(k));
+				generateKMeansResult(points1, centroids, src, "eu" + to_string(k), mode );
 
 				std::cout << "Cosine Distance, " << to_string(k) << std::endl;
 				centroids.clear();
 				centroids = kMeansClustering(points2, k, numberOfRepetitions, weights, error, &cosineSimilarity);
-				generateKMeansResult(points2, centroids, src, "cos" + to_string(k));
+				generateKMeansResult(points2, centroids, src, "cos" + to_string(k), mode);
 
 				std::cout << "L1(Manhattan) Distance, " << to_string(k) << std::endl;
 				centroids.clear();
 				centroids = kMeansClustering(points3, k, numberOfRepetitions, weights, error, &L1Norm);
-				generateKMeansResult(points3, centroids, src, "man" + to_string(k));
+				generateKMeansResult(points3, centroids, src, "man" + to_string(k), mode);
 			}
 		}
 		else
 		{
 			std::cout << "Euclidean Distance, " << to_string(k_input) << std::endl;
 			vector<Point1> centroids = kMeansClustering(points1, k_input, numberOfRepetitions, weights, error, &euclidianDistance);
-			generateKMeansResult(points1, centroids, src, "eu" + to_string(k_input));
+			generateKMeansResult(points1, centroids, src, "eu" + to_string(k_input), mode);
 
 			std::cout << "Cosine Distance, " << to_string(k_input) << std::endl;
 			centroids.clear();
 			centroids = kMeansClustering(points2, k_input, numberOfRepetitions, weights, error, &cosineSimilarity);
-			generateKMeansResult(points2, centroids, src, "cos" + to_string(k_input));
+			generateKMeansResult(points2, centroids, src, "cos" + to_string(k_input), mode);
 
 			std::cout << "L1(Manhattan) Distance, " << to_string(k_input) << std::endl;
 			centroids.clear();
 			centroids = kMeansClustering(points3, k_input, numberOfRepetitions, weights, error, &L1Norm);
-			generateKMeansResult(points3, centroids, src, "man" + to_string(k_input));
+			generateKMeansResult(points3, centroids, src, "man" + to_string(k_input) , mode);
 		}
 
 		namedWindow("src");
